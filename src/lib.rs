@@ -81,6 +81,7 @@ pub fn create_recursive_circuit(
         .collect::<Vec<String>>();
     let mut current_public_input = start_public_input_hex.clone();
 
+    println!("== GENERATING R1CS INSTANCES & WITNESSES");
     for i in 0..iteration_count {
         let decimal_stringified_input: Vec<String> = current_public_input
             .iter()
@@ -93,6 +94,11 @@ pub fn create_recursive_circuit(
         };
 
         let input_json = serde_json::to_string(&input).unwrap();
+<<<<<<< HEAD
+=======
+        println!("- {}", input_json);
+        fs::write(&witness_generator_input, input_json).unwrap();
+>>>>>>> d481e7f (more verbose printing)
 
         let is_wasm = match &witness_generator_file {
             FileLocation::PathBuf(path) => path.extension().unwrap_or_default() == "wasm",
@@ -129,6 +135,7 @@ pub fn create_recursive_circuit(
             .collect();
     }
     fs::remove_file(witness_generator_output)?;
+    println!("==");
 
     let circuit_secondary = TrivialTestCircuit::default();
 
@@ -136,7 +143,9 @@ pub fn create_recursive_circuit(
 
     let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
 
+    println!("== FOLDING RECURSIVE CIRCUIT");
     for i in 0..iteration_count {
+        println!("- {}", i);
         let res = RecursiveSNARK::prove_step(
             &pp,
             recursive_snark,
@@ -149,6 +158,7 @@ pub fn create_recursive_circuit(
         assert!(res.is_ok());
         recursive_snark = Some(res.unwrap());
     }
+    println!("==");
 
     let recursive_snark = recursive_snark.unwrap();
     Ok(recursive_snark)

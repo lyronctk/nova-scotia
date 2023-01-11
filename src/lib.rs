@@ -7,7 +7,14 @@ use std::{
 
 use circom::circuit::{CircomCircuit, R1CS};
 use nova_snark::{
-    traits::{circuit::TrivialTestCircuit, Group},
+    circuit::{NovaAugmentedCircuit, NovaAugmentedCircuitInputs, NovaAugmentedCircuitParams},
+    r1cs::{
+        R1CSGens, R1CSInstance, R1CSShape, R1CSWitness, RelaxedR1CSInstance, RelaxedR1CSWitness,
+    },
+    traits::{
+        circuit::TrivialTestCircuit, AbsorbInROTrait, Group, ROConstants, ROConstantsCircuit,
+        ROConstantsTrait, ROTrait,
+    },
     PublicParams, RecursiveSNARK,
 };
 use num_bigint::BigInt;
@@ -46,19 +53,32 @@ pub fn create_public_params(
     };
     let circuit_secondary = TrivialTestCircuit::default();
 
+    // let ro_consts_primary: ROConstants<G1> = ...;
+    // ro_consts_primary.
+    // ro_consts_circuit_primary: ROConstantsCircuit<G2>,
+    // r1cs_gens_primary: R1CSGens<G1>,
+    // r1cs_shape_primary: R1CSShape<G1>,
+    // r1cs_shape_padded_primary: R1CSShape<G1>,
+    // ro_consts_secondary: ROConstants<G2>,
+    // ro_consts_circuit_secondary: ROConstantsCircuit<G1>,
+    // r1cs_gens_secondary: R1CSGens<G2>,
+    // r1cs_shape_secondary: R1CSShape<G2>,
+    // r1cs_shape_padded_secondary: R1CSShape<G2>,
+
     let pp = PublicParams::<G1, G2, CircomCircuit<F1>, TrivialTestCircuit<F2>>::setup(
         circuit_primary.clone(),
         circuit_secondary.clone(),
     );
+
     pp
 }
 
 #[derive(Serialize, Deserialize)]
-struct CircomInput {
-    step_in: Vec<String>,
+pub struct CircomInput {
+    pub step_in: Vec<String>,
 
     #[serde(flatten)]
-    extra: HashMap<String, Value>,
+    pub extra: HashMap<String, Value>,
 }
 
 #[cfg(not(target_family = "wasm"))]
@@ -81,7 +101,6 @@ pub fn create_recursive_circuit(
         .collect::<Vec<String>>();
     let mut current_public_input = start_public_input_hex.clone();
 
-    println!("== GENERATING R1CS INSTANCES & WITNESSES");
     for i in 0..iteration_count {
         let decimal_stringified_input: Vec<String> = current_public_input
             .iter()
@@ -95,8 +114,12 @@ pub fn create_recursive_circuit(
 
         let input_json = serde_json::to_string(&input).unwrap();
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         println!("- {}", input_json);
+=======
+        println!("  - R1CS instance w/ input {}", input_json);
+>>>>>>> 8080895 (attempted revert)
         fs::write(&witness_generator_input, input_json).unwrap();
 >>>>>>> d481e7f (more verbose printing)
 
@@ -127,6 +150,7 @@ pub fn create_recursive_circuit(
             witness: Some(witness),
         };
         let current_public_output = circuit.get_public_outputs();
+        println!("  - OUTPUT: {:?}", current_public_output);
 
         circuit_iterations.push(circuit);
         current_public_input = current_public_output
@@ -134,8 +158,13 @@ pub fn create_recursive_circuit(
             .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
             .collect();
     }
+<<<<<<< HEAD
     fs::remove_file(witness_generator_output)?;
     println!("==");
+=======
+    // fs::remove_file(witness_generator_input)?;
+    // fs::remove_file(witness_generator_output)?;
+>>>>>>> 8080895 (attempted revert)
 
     let circuit_secondary = TrivialTestCircuit::default();
 
@@ -143,9 +172,8 @@ pub fn create_recursive_circuit(
 
     let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
 
-    println!("== FOLDING RECURSIVE CIRCUIT");
     for i in 0..iteration_count {
-        println!("- {}", i);
+        // println!("  - folding step {}", i);
         let res = RecursiveSNARK::prove_step(
             &pp,
             recursive_snark,
@@ -158,7 +186,6 @@ pub fn create_recursive_circuit(
         assert!(res.is_ok());
         recursive_snark = Some(res.unwrap());
     }
-    println!("==");
 
     let recursive_snark = recursive_snark.unwrap();
     Ok(recursive_snark)

@@ -115,6 +115,7 @@ class WitnessCalculator {
     for (let i = 0; i < this.n32; i++) {
       arr[this.n32 - 1 - i] = this.instance.exports.readSharedRWMemory(i);
     }
+<<<<<<< HEAD
     this.prime = fromArray32(arr);
 
     this.witnessSize = this.instance.exports.getWitnessSize();
@@ -164,6 +165,51 @@ class WitnessCalculator {
       throw new Error(
         `Not all inputs have been set. Only ${input_counter} out of ${this.instance.exports.getInputSize()}`
       );
+=======
+    
+    circom_version() {
+	return this.instance.exports.getVersion();
+    }
+
+    async _doCalculateWitness(input, sanityCheck) {
+	//input is assumed to be a map from signals to arrays of bigints
+        this.instance.exports.init((this.sanityCheck || sanityCheck) ? 1 : 0);
+        const keys = Object.keys(input);
+	var input_counter = 0;
+        keys.forEach( (k) => {
+            const h = fnvHash(k);
+            const hMSB = parseInt(h.slice(0,8), 16);
+            const hLSB = parseInt(h.slice(8,16), 16);
+            const fArr = flatArray(input[k]);
+	    let signalSize = this.instance.exports.getInputSignalSize(hMSB, hLSB);
+	    if (signalSize < 0){
+		throw new Error(`Signal ${k} not found\n`);
+	    }
+	    if (fArr.length < signalSize) {
+		throw new Error(`Not enough values for input signal ${k}\n`);
+	    }
+	    if (fArr.length > signalSize) {
+		throw new Error(`Too many values for input signal ${k}\n`);
+	    }
+            for (let i=0; i<fArr.length; i++) {
+                const arrFr = toArray32(normalize(fArr[i],this.prime),this.n32)
+                for (let j=0; j<this.n32; j++) {
+		    this.instance.exports.writeSharedRWMemory(j,arrFr[this.n32-1-j]);
+		}
+		try {
+                    this.instance.exports.setInputSignal(hMSB, hLSB,i);
+		    input_counter++;
+		} catch (err) {
+		    // console.log(`After adding signal ${i} of ${k}`)
+                    throw new Error(err);
+		}
+            }
+
+        });
+	if (input_counter < this.instance.exports.getInputSize()) {
+	    throw new Error(`Not all inputs have been set. Only ${input_counter} out of ${this.instance.exports.getInputSize()}`);
+	}
+>>>>>>> 4974089 (updated witness calc)
     }
   }
 
@@ -307,6 +353,12 @@ function flatArray(a) {
       res.push(a);
     }
   }
+}
+
+function normalize(n, prime) {
+    let res = BigInt(n) % prime
+    if (res < 0) res += prime
+    return res
 }
 
 function fnvHash(str) {

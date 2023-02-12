@@ -149,11 +149,7 @@ class WitnessCalculator {
 		throw new Error(`Too many values for input signal ${k}\n`);
 	    }
             for (let i=0; i<fArr.length; i++) {
-<<<<<<< HEAD
                 const arrFr = toArray32(normalize(fArr[i],this.prime),this.n32)
-=======
-                const arrFr = toArray32(BigInt(fArr[i])%this.prime,this.n32)
->>>>>>> 4974089 (updated witness calc)
                 for (let j=0; j<this.n32; j++) {
 		    this.instance.exports.writeSharedRWMemory(j,arrFr[this.n32-1-j]);
 		}
@@ -320,15 +316,12 @@ function flatArray(a) {
     }
 }
 
-<<<<<<< HEAD
 function normalize(n, prime) {
     let res = BigInt(n) % prime
     if (res < 0) res += prime
     return res
 }
 
-=======
->>>>>>> 4974089 (updated witness calc)
 function fnvHash(str) {
     const uint64_max = BigInt(2) ** BigInt(64);
     let hash = BigInt("0xCBF29CE484222325");

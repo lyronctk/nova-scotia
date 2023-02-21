@@ -44,8 +44,7 @@ pub fn generate_witness_from_bin<Fr: PrimeField>(
 pub fn generate_witness_from_wasm<Fr: PrimeField>(
     witness_wasm: &FileLocation,
     witness_input_json: &String,
-    witness_output: &Path,
-    idx: i32,
+    witness_output: &Path
 ) -> Vec<Fr> {
     let witness_wasm = match witness_wasm {
         FileLocation::PathBuf(path) => path,
@@ -53,7 +52,7 @@ pub fn generate_witness_from_wasm<Fr: PrimeField>(
     };
 
     let root = current_dir().unwrap();
-    let witness_generator_input = root.join(format!("circom_input_{}.json", idx));
+    let witness_generator_input = root.join("circom_input_{}.json");
     fs::write(&witness_generator_input, witness_input_json).unwrap();
 
     let witness_js = Path::new(concat!(

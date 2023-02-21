@@ -73,16 +73,18 @@ pub fn create_recursive_circuit(
     let witness_generator_output = root.join("circom_witness.wtns");
 
     let iteration_count = private_inputs.len();
-    let mut circuit_iterations = Vec::with_capacity(iteration_count);
-
     let start_public_input_hex = start_public_input
         .iter()
         .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
         .collect::<Vec<String>>();
     let mut current_public_input = start_public_input_hex.clone();
 
+    let circuit_secondary = TrivialTestCircuit::default();
+    let mut recursive_snark: Option<RecursiveSNARK<G1, G2, C1, C2>> = None;
+    let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
+
     for i in 0..iteration_count {
-        println!("CREATE CIRCUIT ITER {}", i);
+        println!("  - Constructing (U, W) pair and folding iteration {}", i,);
         let decimal_stringified_input: Vec<String> = current_public_input
             .iter()
             .map(|x| BigInt::from_str_radix(x, 16).unwrap().to_str_radix(10))
@@ -105,7 +107,6 @@ pub fn create_recursive_circuit(
                 &witness_generator_file,
                 &input_json,
                 &witness_generator_output,
-                i as i32,
             )
         } else {
             let witness_generator_file = match &witness_generator_file {
@@ -124,25 +125,15 @@ pub fn create_recursive_circuit(
         };
         let current_public_output = circuit.get_public_outputs();
 
-        circuit_iterations.push(circuit);
         current_public_input = current_public_output
             .iter()
             .map(|&x| format!("{:?}", x).strip_prefix("0x").unwrap().to_string())
             .collect();
-    }
-    fs::remove_file(witness_generator_output)?;
 
-    let circuit_secondary = TrivialTestCircuit::default();
-
-    let mut recursive_snark: Option<RecursiveSNARK<G1, G2, C1, C2>> = None;
-
-    let z0_secondary = vec![<G2 as Group>::Scalar::zero()];
-
-    for i in 0..iteration_count {
         let res = RecursiveSNARK::prove_step(
             &pp,
             recursive_snark,
-            circuit_iterations[i].clone(),
+            circuit.clone(),
             circuit_secondary.clone(),
             start_public_input.clone(),
             z0_secondary.clone(),
@@ -151,7 +142,7 @@ pub fn create_recursive_circuit(
         assert!(res.is_ok());
         recursive_snark = Some(res.unwrap());
     }
-
+    fs::remove_file(witness_generator_output)?;
     let recursive_snark = recursive_snark.unwrap();
     Ok(recursive_snark)
 }

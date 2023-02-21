@@ -82,6 +82,7 @@ pub fn create_recursive_circuit(
     let mut current_public_input = start_public_input_hex.clone();
 
     for i in 0..iteration_count {
+        println!("CREATE CIRCUIT ITER {}", i);
         let decimal_stringified_input: Vec<String> = current_public_input
             .iter()
             .map(|x| BigInt::from_str_radix(x, 16).unwrap().to_str_radix(10))
@@ -104,6 +105,7 @@ pub fn create_recursive_circuit(
                 &witness_generator_file,
                 &input_json,
                 &witness_generator_output,
+                i as i32,
             )
         } else {
             let witness_generator_file = match &witness_generator_file {

@@ -52,7 +52,7 @@ pub fn generate_witness_from_wasm<Fr: PrimeField>(
     };
 
     let root = current_dir().unwrap();
-    let witness_generator_input = root.join("circom_input_{}.json");
+    let witness_generator_input = root.join("circom_input.json");
     fs::write(&witness_generator_input, witness_input_json).unwrap();
 
     let witness_js = Path::new(concat!(

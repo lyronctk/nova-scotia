@@ -27,6 +27,10 @@ pub fn generate_witness_from_bin<Fr: PrimeField>(
     let witness_generator_input = root.join("circom_input.json");
     fs::write(&witness_generator_input, witness_input_json).unwrap();
 
+    println!("witness_bin: {}", witness_bin.to_str().unwrap());
+    println!("witness_generator_input: {}", witness_generator_input.to_str().unwrap());
+    println!("witness_output: {}", witness_output.to_str().unwrap());
+
     let output = Command::new(witness_bin)
         .arg(&witness_generator_input)
         .arg(witness_output)
@@ -36,7 +40,7 @@ pub fn generate_witness_from_bin<Fr: PrimeField>(
         print!("stdout: {}", str::from_utf8(&output.stdout).unwrap());
         print!("stderr: {}", str::from_utf8(&output.stderr).unwrap());
     }
-    let _ = fs::remove_file(witness_generator_input);
+    // let _ = fs::remove_file(witness_generator_input);
     load_witness_from_file(witness_output)
 }
 
@@ -44,7 +48,7 @@ pub fn generate_witness_from_bin<Fr: PrimeField>(
 pub fn generate_witness_from_wasm<Fr: PrimeField>(
     witness_wasm: &FileLocation,
     witness_input_json: &String,
-    witness_output: &Path
+    witness_output: &Path,
 ) -> Vec<Fr> {
     let witness_wasm = match witness_wasm {
         FileLocation::PathBuf(path) => path,
@@ -59,6 +63,7 @@ pub fn generate_witness_from_wasm<Fr: PrimeField>(
         env!("CARGO_MANIFEST_DIR"),
         "/src/circom/wasm_deps/generate_witness.js"
     ));
+
     let output = Command::new("node")
         .arg(witness_js)
         .arg(witness_wasm)
